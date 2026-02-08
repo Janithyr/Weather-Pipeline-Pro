@@ -7,23 +7,83 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="app">
+        <header class="app__header">
+            <div class="brand">
+                <div class="brand__icon">🌤️</div>
+                <div>
+                    <h1>Weather Atlas</h1>
+                    <p>Live conditions and a clean 5-day outlook.</p>
+                </div>
+            </div>
 
-    <div class="container">
-        <h1>🌤️ Weather App</h1>
+            <div class="unit-toggle" role="group" aria-label="Temperature units">
+                <button class="unit-btn" data-unit="metric">C</button>
+                <button class="unit-btn" data-unit="imperial">F</button>
+            </div>
+        </header>
 
-        <input type="text" id="city" placeholder="Enter city name">
-        <button onclick="getWeather()">Get Weather</button>
+        <section class="search">
+            <form id="search-form" class="search__form" autocomplete="off">
+                <input
+                    type="text"
+                    id="city-input"
+                    name="city"
+                    placeholder="Search city or place"
+                    aria-label="Search city"
+                >
+                <button type="submit" class="primary-btn">Search</button>
+                <button type="button" id="geo-btn" class="ghost-btn">Use my location</button>
+            </form>
+            <div class="chips" id="history" aria-label="Recent searches"></div>
+        </section>
 
-        <div id="result"></div>
+        <section class="current">
+            <div id="status" class="status" aria-live="polite"></div>
+            <div class="current-card">
+                <div class="current-main">
+                    <div class="icon" id="weather-icon">--</div>
+                    <div>
+                        <div class="temp" id="temp">--</div>
+                        <div class="summary" id="summary">Enter a city to begin.</div>
+                        <div class="meta" id="location-time">--</div>
+                    </div>
+                </div>
+                <div class="details">
+                    <div class="detail">
+                        <span>Feels like</span>
+                        <strong id="feels-like">--</strong>
+                    </div>
+                    <div class="detail">
+                        <span>Humidity</span>
+                        <strong id="humidity">--</strong>
+                    </div>
+                    <div class="detail">
+                        <span>Wind</span>
+                        <strong id="wind">--</strong>
+                    </div>
+                    <div class="detail">
+                        <span>Pressure</span>
+                        <strong id="pressure">--</strong>
+                    </div>
+                    <div class="detail">
+                        <span>Visibility</span>
+                        <strong id="visibility">--</strong>
+                    </div>
+                    <div class="detail">
+                        <span>Sunrise</span>
+                        <strong id="sunrise">--</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <h3>Recent Searches</h3>
-        <ul id="history"></ul>
+        <section class="forecast">
+            <h2>5-Day Outlook</h2>
+            <div class="forecast-grid" id="forecast"></div>
+        </section>
     </div>
 
     <script src="script.js"></script>
-    <script>
-        getWeatherByLocation();
-        loadHistory();
-    </script>
 </body>
 </html>
