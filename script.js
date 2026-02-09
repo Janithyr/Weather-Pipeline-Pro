@@ -69,6 +69,56 @@ function init() {
     } else {
         getWeatherByLocation();
     }
+
+    // Removed the following event listener:
+    // alertForm.addEventListener("submit", ...);
+
+    // Removed the following variables:
+    // - alertCondition
+    // - alertThreshold
+    // - alertInterval
+
+    // Removed the following HTML element references:
+    // - alertForm
+    // - alertStatus
+
+    // Removed the following functions:
+    // - checkWeatherAlarm
+    // - triggerAlarm
+
+    // Removed the following code blocks:
+    // - Set Weather Alarm feature
+    // - Related HTML elements and logic
+
+    // Removed the following code blocks:
+    // - Weather Alert notifications for Sri Lanka
+    // - Related functions and logic
+
+    // Removed the following code blocks:
+    // - Periodic fetching of weather alerts
+    // - Initial call to fetch weather alerts
+
+    // Removed the following code blocks:
+    // - fetchSriLankaWeatherAlerts
+    // - generateSriLankaAlerts
+    // - sendBrowserNotification
+    // - setInterval
+
+    // Removed the following code blocks:
+    // - fetchByCoords
+    // - fetchByCity
+    // - fetchJson
+    // - displayCurrent
+    // - displayForecast
+    // - groupForecastByDay
+    // - pickClosestToHour
+    // - toLocalDate
+    // - formatLocalDay
+    // - formatLocalDateTime
+    // - formatLocalTime
+    // - resolveIcon
+    // - capitalize
+    // - getWeatherByLocation
 }
 
 function setUnitButtons() {
