@@ -1,18 +1,17 @@
 name: Weather Notification Pipeline
 
 on:
-  # Run daily at 8:00 AM UTC and weekly on Monday
+  # Run daily at 8:00 AM UTC
   schedule:
     - cron: '0 8 * * *'
-    - cron: '0 9 * * 1'
   
   # Allow manual trigger
   workflow_dispatch:
 
 jobs:
-  check-extreme-weather:
+  daily-weather-notification:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -22,177 +21,49 @@ jobs:
       with:
         node-version: 18
     
-    - name: Fetch weather data
+    - name: Fetch today's weather
       id: weather
       run: |
         # Fetch weather data from API (replace with your actual API)
         WEATHER_DATA=$(curl -s "https://api.openweathermap.org/data/2.5/weather?q=London&appid=${{ secrets.WEATHER_API_KEY }}&units=metric")
         echo "data=$WEATHER_DATA" >> $GITHUB_OUTPUT
-        
-        # Extract temperature and conditions
+
+        # Extract temperature, condition, and description
         TEMP=$(echo $WEATHER_DATA | jq -r '.main.temp')
         CONDITION=$(echo $WEATHER_DATA | jq -r '.weather[0].main')
         DESCRIPTION=$(echo $WEATHER_DATA | jq -r '.weather[0].description')
-        
+
         echo "temp=$TEMP" >> $GITHUB_OUTPUT
         echo "condition=$CONDITION" >> $GITHUB_OUTPUT
         echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
-    
-    - name: Check for extreme conditions
-      id: check
+
+    - name: Check for rain
+      id: check-rain
       run: |
-        TEMP=${{ steps.weather.outputs.temp }}
         CONDITION=${{ steps.weather.outputs.condition }}
-        
-        # Check for extreme weather
-        EXTREME=false
-        MESSAGE=""
-        
-        if (( $(echo "$TEMP > 35" | bc -l) )); then
-          EXTREME=true
-          MESSAGE="⚠️ EXTREME HEAT ALERT: Temperature is ${TEMP}°C!"
-        elif (( $(echo "$TEMP < 0" | bc -l) )); then
-          EXTREME=true
-          MESSAGE="❄️ FREEZING ALERT: Temperature is ${TEMP}°C!"
+        RAIN=false
+        if [[ "$CONDITION" == "Rain" ]]; then
+          RAIN=true
         fi
-        
-        if [[ "$CONDITION" == "Thunderstorm" ]] || [[ "$CONDITION" == "Tornado" ]]; then
-          EXTREME=true
-          MESSAGE="⚡ SEVERE WEATHER ALERT: $CONDITION detected!"
-        fi
-        
-        echo "extreme=$EXTREME" >> $GITHUB_OUTPUT
-        echo "message=$MESSAGE" >> $GITHUB_OUTPUT
-    
-    - name: Send email notification
-      if: steps.check.outputs.extreme == 'true'
+        echo "rain=$RAIN" >> $GITHUB_OUTPUT
+
+    - name: Send daily weather email
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com
         server_port: 465
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: Weather Alert - Extreme Conditions Detected
+        subject: "Today's Weather Forecast"
         body: |
-          ${{ steps.check.outputs.message }}
-          
-          Current Conditions:
+          Good morning! Here's the weather forecast for today:
+
           Temperature: ${{ steps.weather.outputs.temp }}°C
           Condition: ${{ steps.weather.outputs.condition }}
           Description: ${{ steps.weather.outputs.description }}
-          
-          Please take necessary precautions.
-        to: ${{ secrets.NOTIFICATION_EMAIL }}
-        from: Weather Pipeline Pro
-    
-    - name: Send webhook notification
-      if: steps.check.outputs.extreme == 'true'
-      run: |
-        curl -X POST ${{ secrets.WEBHOOK_URL }} \
-          -H "Content-Type: application/json" \
-          -d '{
-            "type": "extreme_weather",
-            "message": "${{ steps.check.outputs.message }}",
-            "temperature": "${{ steps.weather.outputs.temp }}",
-            "condition": "${{ steps.weather.outputs.condition }}",
-            "description": "${{ steps.weather.outputs.description }}",
-            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-          }'
 
-  daily-weather-summary:
-    runs-on: ubuntu-latest
-    if: github.event.schedule == '0 8 * * *' || github.event_name == 'workflow_dispatch'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    
-    - name: Fetch weather forecast
-      id: forecast
-      run: |
-        # Fetch 5-day forecast (replace with your actual API)
-        FORECAST_DATA=$(curl -s "https://api.openweathermap.org/data/2.5/forecast?q=London&appid=${{ secrets.WEATHER_API_KEY }}&units=metric&cnt=8")
-        echo "data=$FORECAST_DATA" >> $GITHUB_OUTPUT
-    
-    - name: Generate daily summary
-      run: |
-        echo "Generating daily weather summary..."
-        # Process forecast data and create summary
-    
-    - name: Send daily summary email
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: Daily Weather Summary - $(date +%Y-%m-%d)
-        body: |
-          Good morning! Here's your daily weather summary.
-          
-          Today's Forecast:
-          - Check the attached data for detailed forecast
-          
+          ${{ steps.check-rain.outputs.rain == 'true' && '☔ Rain is expected today. Please carry an umbrella!' || '' }}
+
           Have a great day!
         to: ${{ secrets.NOTIFICATION_EMAIL }}
         from: Weather Pipeline Pro
-
-  weekly-weather-summary:
-    runs-on: ubuntu-latest
-    if: github.event.schedule == '0 9 * * 1' || github.event_name == 'workflow_dispatch'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    
-    - name: Fetch weekly weather data
-      id: weekly
-      run: |
-        # Fetch extended forecast
-        FORECAST_DATA=$(curl -s "https://api.openweathermap.org/data/2.5/forecast?q=London&appid=${{ secrets.WEATHER_API_KEY }}&units=metric")
-        echo "data=$FORECAST_DATA" >> $GITHUB_OUTPUT
-    
-    - name: Generate weekly summary
-      run: |
-        echo "Generating weekly weather summary..."
-        # Process weekly data and create comprehensive report
-    
-    - name: Send weekly summary email
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: Weekly Weather Summary - Week of $(date +%Y-%m-%d)
-        body: |
-          Happy Monday! Here's your weekly weather outlook.
-          
-          Week Ahead:
-          - Detailed 7-day forecast
-          - Temperature trends
-          - Precipitation chances
-          
-          Plan your week accordingly!
-        to: ${{ secrets.NOTIFICATION_EMAIL }}
-        from: Weather Pipeline Pro
-    
-    - name: Send weekly webhook notification
-      run: |
-        curl -X POST ${{ secrets.WEBHOOK_URL }} \
-          -H "Content-Type: application/json" \
-          -d '{
-            "type": "weekly_summary",
-            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
-            "message": "Weekly weather summary generated"
-          }'
